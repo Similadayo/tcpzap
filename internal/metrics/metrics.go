@@ -1,34 +1,41 @@
+// internal/metrics/metrics.go
 package metrics
 
-import (
-	"time"
+import "time"
 
-	"github.com/similadayo/tcpzap/pkg/tcpzap"
-)
-
-// Tracker measures operation latencies
-type Tracker struct {
-	start  time.Time
-	cfg    *tcpzap.Config
-	target string
+// Metrics captures performance data.
+type Metrics struct {
+	Latency time.Duration
+	Target  string
+	Success bool
 }
 
-// NewTracker creates a new tracker
-func NewTracker(cfg *tcpzap.Config, target string) *Tracker {
+// ReportFunc is a callback to report metrics.
+type ReportFunc func(Metrics)
+
+// Tracker measures operation latency.
+type Tracker struct {
+	start  time.Time
+	target string
+	report ReportFunc
+}
+
+// NewTracker starts a metrics tracker.
+func NewTracker(target string, report ReportFunc) *Tracker {
 	return &Tracker{
 		start:  time.Now(),
-		cfg:    cfg,
 		target: target,
+		report: report,
 	}
 }
 
-// Reports calculates latency and calls metric callback
+// Report calculates latency and calls the callback.
 func (t *Tracker) Report(success bool) {
-	if t.cfg == nil || t.cfg.MetricsFunc == nil {
+	if t.report == nil {
 		return
 	}
 	latency := time.Since(t.start)
-	t.cfg.MetricsFunc(tcpzap.Metrics{
+	t.report(Metrics{
 		Latency: latency,
 		Target:  t.target,
 		Success: success,

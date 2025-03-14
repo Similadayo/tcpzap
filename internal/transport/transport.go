@@ -10,38 +10,63 @@ import (
 	"github.com/similadayo/tcpzap/internal/framing"
 )
 
+type Config struct {
+	Retries    int
+	RetryDelay time.Duration
+}
+
 type Conn struct {
 	net.Conn
 	codec framing.Codec
 	mu    sync.Mutex
 	ctrl  *congestion.Controller
+	cfg   Config
 }
 
 // NewConn wraps a net.Conn with a framing codec
-func NewConn(conn net.Conn, codec framing.Codec) *Conn {
+func NewConn(conn net.Conn, codec framing.Codec, cfg Config) *Conn {
 	return &Conn{
 		Conn:  conn,
 		codec: codec,
 		ctrl:  congestion.NewController(congestion.DefaultConfig()),
+		cfg:   cfg,
 	}
 }
 
 // Send writes a message to the connection
 func (c *Conn) Send(ctx context.Context, msg []byte) error {
-	for !c.ctrl.CanSend(ctx) {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(c.ctrl.RTT() / 10):
+	var lastErr error
+	for attempt := 0; attempt <= c.cfg.Retries; attempt++ {
+		if !c.ctrl.CanSend(ctx) {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(c.ctrl.RTT() / 10):
+				continue
+			}
+		}
+		c.mu.Lock()
+		if err := c.SetDeadline(ctx); err != nil {
+			c.mu.Unlock()
+			return err
+		}
+		err := c.codec.Encode(c.Conn, msg)
+		c.mu.Unlock()
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+		if attempt < c.cfg.Retries {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(c.cfg.RetryDelay):
+				continue
+			}
+
 		}
 	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if err := c.codec.Encode(c.Conn, msg); err != nil {
-		return err
-	}
-	return c.codec.Encode(c.Conn, msg)
+	return lastErr
 }
 
 // Receive reads a message from the connection

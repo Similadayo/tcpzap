@@ -1,3 +1,4 @@
+// pkg/tcpzap/server.go
 package tcpzap
 
 import (
@@ -6,7 +7,6 @@ import (
 	"log"
 	"net"
 	"sync"
-	"time"
 
 	"github.com/similadayo/tcpzap/internal/framing"
 	"github.com/similadayo/tcpzap/internal/transport"
@@ -18,18 +18,21 @@ type Server struct {
 	h      Handler
 	mu     sync.Mutex
 	closed bool
+	cfg    Config
 }
 
-// NewServer creates a new server
-func NewServer(addr string, timeout time.Duration) (*Server, error) {
+func NewServer(addr string, cfg Config) (*Server, error) {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("tcpzap: listen: %w", err)
 	}
-	return &Server{ln: ln, codec: framing.NewCodec()}, nil
+	return &Server{
+		ln:    ln,
+		codec: framing.NewCodec(),
+		cfg:   cfg,
+	}, nil
 }
 
-// Serve accepts incoming connections on the listener
 func (s *Server) Serve(ctx context.Context, h Handler) error {
 	s.mu.Lock()
 	s.h = h
@@ -51,10 +54,14 @@ func (s *Server) Serve(ctx context.Context, h Handler) error {
 	}
 }
 
-// handleConn handles a connection
 func (s *Server) handleConn(ctx context.Context, conn net.Conn) {
-	c := transport.NewConn(conn, s.codec)
+	tCfg := transport.Config{
+		Retries:    s.cfg.Retries,
+		RetryDelay: s.cfg.RetryDelay,
+	}
+	c := transport.NewConn(conn, s.codec, tCfg)
 	defer c.Close()
+
 	for {
 		msg, err := c.Receive(ctx)
 		if err != nil {
@@ -73,7 +80,6 @@ func (s *Server) handleConn(ctx context.Context, conn net.Conn) {
 	}
 }
 
-// Close closes the server
 func (s *Server) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

@@ -1,3 +1,4 @@
+// cmd/echo/main.go
 package main
 
 import (
@@ -5,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/similadayo/tcpzap/internal/metrics"
 	"github.com/similadayo/tcpzap/pkg/tcpzap"
 )
 
@@ -15,8 +17,13 @@ func (h echoHandler) Handle(_ context.Context, msg []byte) ([]byte, error) {
 }
 
 func main() {
+	cfg := tcpzap.DefaultConfig()
+	cfg.MetricsFunc = func(m metrics.Metrics) {
+		log.Printf("Latency: %v, Target: %s, Success: %v", m.Latency, m.Target, m.Success)
+	}
+
 	ctx := context.Background()
-	srv, err := tcpzap.NewServer("localhost:8080", 5*time.Second)
+	srv, err := tcpzap.NewServer(":8080", cfg)
 	if err != nil {
 		log.Fatalf("Server init: %v", err)
 	}
@@ -28,15 +35,15 @@ func main() {
 
 	time.Sleep(100 * time.Millisecond)
 
-	cli, err := tcpzap.NewClient("localhost:8080", 5*time.Second)
+	cli, err := tcpzap.NewClient("localhost:8080", cfg)
 	if err != nil {
 		log.Fatalf("Client init: %v", err)
 	}
 	defer cli.Close()
 
-	resp, err := cli.Send(ctx, []byte("Hello"))
+	resp, err := cli.Send(ctx, []byte("Hello, tcpzap!"))
 	if err != nil {
 		log.Fatalf("Client send: %v", err)
 	}
-	log.Printf("Response: %s", resp)
+	log.Printf("Response: %q", resp)
 }
