@@ -7,6 +7,7 @@ A high-performance, message-oriented TCP library in Go.
 - Message-based communication with length-prefixed framing.
 - Context-aware client and server APIs.
 - Concurrency-safe design.
+- Custom congestion control with AIMD for low-latency scenarios.
 
 ## Installation
 
