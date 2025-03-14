@@ -88,12 +88,9 @@ func (c *Controller) AckReceived() {
 func (c *Controller) AdjustWindow() {
 	if c.congested {
 		// Multiplicative decrease on congestion
-		c.window = int(float64(c.window) * c.cfg.BackoffFactor)
-		if c.window < c.cfg.MinWindow {
-			c.window = c.cfg.MinWindow
-		}
+		c.window = max(int(float64(c.window)*c.cfg.BackoffFactor), c.cfg.MinWindow)
 		c.congested = false
-	} else if c.unacked < c.window/2 && c.window < c.cfg.MaxWindow {
+	} else if c.unacked < c.cfg.MaxWindow {
 		// Additive increase on no congestion
 		c.window++
 	}
