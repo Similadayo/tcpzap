@@ -37,6 +37,12 @@ type Controller struct {
 	congested bool
 }
 
+func (c *Controller) RTT() time.Duration {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.rtt
+}
+
 // NewController creates a new controller
 func NewController(cfg Config) *Controller {
 	return &Controller{
