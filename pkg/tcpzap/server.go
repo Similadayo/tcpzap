@@ -12,10 +12,6 @@ import (
 	"github.com/similadayo/tcpzap/internal/transport"
 )
 
-type Handler interface {
-	Handle(ctx context.Context, msg []byte) ([]byte, error)
-}
-
 type Server struct {
 	ln     net.Listener
 	codec  framing.Codec
