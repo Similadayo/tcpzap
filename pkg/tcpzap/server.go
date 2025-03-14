@@ -25,12 +25,12 @@ type Server struct {
 }
 
 // NewServer creates a new server
-func NewServer(addr string, timeout time.Duration, h Handler) (*Server, error) {
+func NewServer(addr string, timeout time.Duration) (*Server, error) {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("tcpzap: listen: %w", err)
 	}
-	return &Server{ln: ln, codec: framing.NewCodec(), h: h}, nil
+	return &Server{ln: ln, codec: framing.NewCodec()}, nil
 }
 
 // Serve accepts incoming connections on the listener
