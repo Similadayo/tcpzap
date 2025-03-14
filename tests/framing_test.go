@@ -7,24 +7,34 @@ import (
 	"github.com/similadayo/tcpzap/internal/framing"
 )
 
-func TestFraming(t *testing.T) {
-	//simulate connection with buffer
+func TestLengthPrefixCodec(t *testing.T) {
+	codec := framing.NewCodec()
 	buf := new(bytes.Buffer)
 
-	//test data
-	msg := []byte("hello, tcpzap")
-	err := framing.Write(buf, msg)
-	if err != nil {
-		t.Fatalf("Write failed: %v", err)
+	tests := []struct {
+		input   []byte
+		wantErr bool
+		wantMsg []byte
+	}{
+		{[]byte("Hello"), false, []byte("Hello")},
+		{[]byte(""), false, []byte("")},
 	}
 
-	// read it back
-	data, err := framing.Read(buf)
-	if err != nil {
-		t.Fatalf("Read failed: %v", err)
-	}
-
-	if !bytes.Equal(data, msg) {
-		t.Fatalf("expected %q, got %q", msg, data)
+	for _, tt := range tests {
+		if err := codec.Encode(buf, tt.input); (err != nil) != tt.wantErr {
+			t.Errorf("Encode(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
+		}
+		if tt.wantErr {
+			continue
+		}
+		got, err := codec.Decode(buf)
+		if err != nil {
+			t.Errorf("Decode() error = %v", err)
+			continue
+		}
+		if !bytes.Equal(got, tt.wantMsg) {
+			t.Errorf("Decode() got = %v, want %v", got, tt.wantMsg)
+		}
+		buf.Reset()
 	}
 }
