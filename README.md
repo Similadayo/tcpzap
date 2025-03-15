@@ -17,19 +17,20 @@ A high-performance, message-oriented TCP library in Go.
 go get github.com/yourname/tcpzap
 ```
 
-
 ## Quick Start
+
 Here’s a simple echo client and server:
 
 ### Example
+
 ```go
 package main
 
 import (
     "context"
     "log"
-    "github.com/yourname/tcpzap/internal/metrics"
-    "github.com/yourname/tcpzap/pkg/tcpzap"
+    "github.com/similadayo/tcpzap/internal/metrics"
+ "github.com/similadayo/tcpzap/pkg/tcpzap"
 )
 
 func main() {
@@ -68,25 +69,20 @@ func (h echoHandler) Handle(_ context.Context, msg []byte) ([]byte, error) {
 ```
 
 ### Run it
+
 ```bash
 go run main.go
 ```
 
 ### Expected Output
+
 ```text
 2025/03/15 01:07:58 Latency: 611.4µs, Target: localhost:8080, Success: true
 2025/03/15 01:07:58 Got: "Echo: Hello"
 ```
 
-## Features
-- **Message Framing**: Length-prefixed messages for easy parsing.
-- **Congestion Control**: Custom AIMD algorithm optimized for low latency.
-- **Retries**: Automatic retries for transient failures, configurable.
-- **Metrics**: Track latency and success with a callback.
-- **Concurrency-Safe**: Built with Go’s concurrency model in mind.
-- **Lightweight**: No external dependencies, pure Go.
-
 ## Configuration
+
 Customize `tcpzap` with `Config`:
 
 ```go
@@ -101,6 +97,7 @@ cfg := tcpzap.Config{
 ```
 
 ## API Reference
+
 - `tcpzap.NewClient(addr string, cfg Config) (*Client, error)`: Connects to a server.
 - `Client.Send(ctx context.Context, msg []byte) ([]byte, error)`: Sends a message, returns the response.
 - `Client.Close() error`: Closes the connection.
@@ -112,9 +109,11 @@ cfg := tcpzap.Config{
 See GoDoc for details (if published).
 
 ## Example: Chat Server
+
 For a full example, check `cmd/echo/main.go` in the repo.
 
 ## Contributing
+
 Found a bug or have an idea? Open an issue or PR on GitHub. Run tests with:
 
 ```bash
@@ -122,5 +121,5 @@ go test ./tests
 ```
 
 ## License
-MIT
 
+MIT
