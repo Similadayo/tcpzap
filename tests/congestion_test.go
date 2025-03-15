@@ -14,32 +14,26 @@ func TestController(t *testing.T) {
 
 	ctx := context.Background()
 
-	//Fill the window
 	for i := 0; i < cfg.InitialWindow; i++ {
 		if !ctrl.CanSend(ctx) {
 			t.Fatalf("CanSend failed at %d, expected true", i)
 		}
 	}
 
-	//should block now
 	if ctrl.CanSend(ctx) {
-		t.Fatalf("CanSend should be false when window is full")
+		t.Error("CanSend should be false when window is full")
 	}
 
-	//simulate acks
 	for i := 0; i < 5; i++ {
 		ctrl.AckReceived()
-		time.Sleep(10 * time.Millisecond) //simulate RTT
+		time.Sleep(10 * time.Millisecond)
 	}
 
-	//Window should adjust
 	if ctrl.Window() >= cfg.InitialWindow {
-		t.Fatalf("Window should be less than initial window")
+		t.Errorf("Window %d should have decreased after congestion", ctrl.Window())
 	}
 
-	//should allow sending again
 	if !ctrl.CanSend(ctx) {
-		t.Fatalf("CanSend failed after acks, expected true")
+		t.Error("CanSend should be true after acks")
 	}
-
 }
