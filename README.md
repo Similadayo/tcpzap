@@ -15,8 +15,8 @@ A high-performance, message-oriented TCP library in Go.
 
 ```bash
 go get github.com/yourname/tcpzap
+```
 
-# tcpzap
 
 ## Quick Start
 Here’s a simple echo client and server:
