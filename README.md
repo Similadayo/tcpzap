@@ -30,7 +30,7 @@ import (
     "context"
     "log"
     "github.com/similadayo/tcpzap/internal/metrics"
- "github.com/similadayo/tcpzap/pkg/tcpzap"
+    "github.com/similadayo/tcpzap/pkg/tcpzap"
 )
 
 func main() {
