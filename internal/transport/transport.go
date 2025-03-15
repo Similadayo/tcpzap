@@ -23,7 +23,6 @@ type Conn struct {
 	cfg   Config
 }
 
-// NewConn wraps a net.Conn with a framing codec
 func NewConn(conn net.Conn, codec framing.Codec, cfg Config) *Conn {
 	return &Conn{
 		Conn:  conn,
@@ -33,7 +32,6 @@ func NewConn(conn net.Conn, codec framing.Codec, cfg Config) *Conn {
 	}
 }
 
-// Send writes a message to the connection
 func (c *Conn) Send(ctx context.Context, msg []byte) error {
 	var lastErr error
 	for attempt := 0; attempt <= c.cfg.Retries; attempt++ {
@@ -46,7 +44,7 @@ func (c *Conn) Send(ctx context.Context, msg []byte) error {
 			}
 		}
 		c.mu.Lock()
-		if err := c.SetDeadline(ctx); err != nil {
+		if err := c.setDeadline(ctx); err != nil {
 			c.mu.Unlock()
 			return err
 		}
@@ -61,17 +59,14 @@ func (c *Conn) Send(ctx context.Context, msg []byte) error {
 			case <-ctx.Done():
 				return ctx.Err()
 			case <-time.After(c.cfg.RetryDelay):
-				continue
 			}
-
 		}
 	}
 	return lastErr
 }
 
-// Receive reads a message from the connection
 func (c *Conn) Receive(ctx context.Context) ([]byte, error) {
-	if err := c.SetDeadline(ctx); err != nil {
+	if err := c.setDeadline(ctx); err != nil {
 		return nil, err
 	}
 	data, err := c.codec.Decode(c.Conn)
@@ -81,14 +76,14 @@ func (c *Conn) Receive(ctx context.Context) ([]byte, error) {
 	return data, err
 }
 
-func (c *Conn) SetDeadline(ctx context.Context) error {
+// setDeadline applies the context's deadline to the connection.
+func (c *Conn) setDeadline(ctx context.Context) error {
 	if deadline, ok := ctx.Deadline(); ok {
 		return c.Conn.SetDeadline(deadline)
 	}
 	return nil
 }
 
-// RTT exposes the current RTT
 func (c *Conn) RTT() time.Duration {
 	return c.ctrl.RTT()
 }
